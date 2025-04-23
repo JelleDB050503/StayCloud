@@ -66,7 +66,9 @@ namespace BookingService.Controllers
                 totalPrice: priceData?.Total ?? 0,            // totaalbedrap ophalen uit PriceResponse
                 accommodationType: request.AccommodationType,
                 stayType: request.StayType,
-                totalNights: priceData?.TotalNights ?? 0 // aantal nachten uit PriceService
+                totalNights: priceData?.TotalNights ?? 0, // aantal nachten uit PriceService
+                guestName: request.GuestName,
+                email: request.Email
             );
 
             _bookings.Add(bookingsResponse); // Boekingen toevoegen aan de lijst
@@ -94,6 +96,25 @@ namespace BookingService.Controllers
 
             _bookings.Remove(booking);
             return Ok($"Boeking {confirmationCode} is verwijderd");
+        }
+
+        // Opzoeken van boekingen op naam en/of confirmation code
+        [HttpGet("search")]
+        public IActionResult SearchBooking([FromQuery] string? name, [FromQuery] string? confirmationCode)
+        {
+            //Filter lijst
+            var results = _bookings.Where(b =>
+            // name is opgegeven --> controleer of naam overeenkomt
+            (string.IsNullOrEmpty(name) || b.Guestname?.ToLower().Contains(name.ToLower()) == true) &&
+            // controleer of confirmationcode exact overeenkomt indien opgegeven
+            (string.IsNullOrEmpty(confirmationCode) || b.ConfirmationCode.ToLower() == confirmationCode.ToLower())).ToList();
+
+            if (!results.Any())
+            {
+                return NotFound("Geen boeking gevonden op basis van naam en confirmatie nummer.");
+            }
+
+            return Ok(results);
         }
     }
 

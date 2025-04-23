@@ -34,10 +34,10 @@ namespace PriceService.Controllers
             decimal basePrice = basePricePerStay * request.Weeks;
 
             // Extra kosten per nacht (elec + touristtaks)
-            decimal nightlyCost = totalNights * 12m; // m om duidelijk te maken dat het om een valuta (decimal) gaat
+            decimal nightlyCost = totalNights * 15m; // m om duidelijk te maken dat het om een valuta (decimal) gaat
 
             //Verplichte eindschoonmaak
-            decimal cleaning = 40m;
+            decimal cleaning = 50m;
 
             // 10 euro per hond per verblijf
             decimal dogs = request.NumDogs * 10m;

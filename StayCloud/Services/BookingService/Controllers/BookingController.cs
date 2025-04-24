@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using BookingService.Helpers;
+using BookingService.Services;
 
 
 namespace BookingService.Controllers
@@ -14,14 +15,13 @@ namespace BookingService.Controllers
     {
 
         private readonly HttpClient _httpClient;
-
-        //Tijdelijke opslag van boekingen
-        private static List<BookingResponse> _bookings = new();
+        private readonly ICosmosDbService _cosmosDbService;
 
         //Constructor HttpClient dependency injection
-        public BookingController(HttpClient httpClient)
+        public BookingController(HttpClient httpClient, ICosmosDbService cosmosDbService)
         {
             _httpClient = httpClient;
+            _cosmosDbService = cosmosDbService;
         }
 
         // POST: boeking creeren
@@ -61,7 +61,7 @@ namespace BookingService.Controllers
             var priceData = await response.Content.ReadFromJsonAsync<PriceResponse>();
 
             // BookingsResponse opstellen
-            var bookingsResponse = new BookingResponse(
+            var booking = new BookingResponse(
                 confirmationCode: Guid.NewGuid().ToString(), // Guid genereert unieke code
                 totalPrice: priceData?.Total ?? 0,            // totaalbedrap ophalen uit PriceResponse
                 accommodationType: request.AccommodationType,
@@ -71,43 +71,39 @@ namespace BookingService.Controllers
                 email: request.Email
             );
 
-            _bookings.Add(bookingsResponse); // Boekingen toevoegen aan de lijst
+            await _cosmosDbService.AddBookingAsync(booking); // Boekingen toevoegen aan de lijst
 
-            return Ok(bookingsResponse);
+            return Ok(booking);
         }
 
         // Alle boekingen ophalen via GET
         [HttpGet("all")]
-        public IActionResult GetAllBookings()
+        public async Task<IActionResult> GetAllBookings()
         {
-            return Ok(_bookings);
+            var bookings = await _cosmosDbService.GetBookingsAsync();
+            return Ok(bookings);
         }
 
 
         // Boekingen verwijderen obv confirmatie code via DELETE
-        [HttpDelete("{confirmationCode}")]
-        public IActionResult DeleteBooking(string confirmationCode)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteBooking(string id)
         {
-            var booking = _bookings.FirstOrDefault(b => b.ConfirmationCode == confirmationCode);
-            if (booking == null)
-            {
-                return NotFound("Boeking is niet gevonden");
-            }
-
-            _bookings.Remove(booking);
-            return Ok($"Boeking {confirmationCode} is verwijderd");
+            await _cosmosDbService.DeleteBookingAsync(id);
+            return Ok($"Boeking {id} is verwijderd");
         }
 
         // Opzoeken van boekingen op naam en/of confirmation code
         [HttpGet("search")]
-        public IActionResult SearchBooking([FromQuery] string? name, [FromQuery] string? confirmationCode)
+        public async Task<IActionResult> SearchBooking([FromQuery] string? name, [FromQuery] string? confirmationCode)
         {
+            var allBookings = await _cosmosDbService.GetBookingsAsync();
             //Filter lijst
-            var results = _bookings.Where(b =>
+            var results = allBookings.Where(b =>
             // name is opgegeven --> controleer of naam overeenkomt
             (string.IsNullOrEmpty(name) || b.Guestname?.ToLower().Contains(name.ToLower()) == true) &&
             // controleer of confirmationcode exact overeenkomt indien opgegeven
-            (string.IsNullOrEmpty(confirmationCode) || b.ConfirmationCode.ToLower() == confirmationCode.ToLower())).ToList();
+            (string.IsNullOrEmpty(confirmationCode) || b.Id.ToLower() == confirmationCode.ToLower())).ToList();
 
             if (!results.Any())
             {
@@ -118,13 +114,15 @@ namespace BookingService.Controllers
         }
 
         // Boekingen bijwerken obv confirmationCode PUT
-        [HttpPut("update/{confirmationCode}")]
-        public async Task<IActionResult> UpdateBooking(string confirmationCode, [FromBody] BookingRequest updatedBooking)
+        [HttpPut("update/{id}")]
+        public async Task<IActionResult> UpdateBooking(string id, [FromBody] BookingRequest updatedBooking)
         {
+
+            var allBookings = await _cosmosDbService.GetBookingsAsync();
             // Zoek bestaande boeking
-            var existingBooking = _bookings.FirstOrDefault(b => b.ConfirmationCode == confirmationCode);
+            var existingBooking = allBookings.FirstOrDefault(b => b.Id == id);
             if (existingBooking == null)
-                return NotFound($"Geen boeking gevonden met boekingsnummer: {confirmationCode}");
+                return NotFound($"Geen boeking gevonden met boekingsnummer: {id}");
 
             // Valideren van de input
             if (!BookingValidator.IsValidAccommodation(updatedBooking.AccommodationType))
@@ -161,6 +159,8 @@ namespace BookingService.Controllers
             existingBooking.Email = updatedBooking.Email;
             existingBooking.TotalNights = priceData?.TotalNights ?? 0;
             existingBooking.TotalPrice = priceData?.Total?? 0;
+
+            await _cosmosDbService.UpdateBookingAsync(existingBooking);
 
             return Ok(existingBooking);
         }

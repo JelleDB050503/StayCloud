@@ -1,7 +1,14 @@
+using System.Security.Policy;
+using Newtonsoft.Json;
+
 namespace BookingService.Models
 {
     public class BookingResponse
     {
+        [JsonProperty("id")]// CosmosDb komt overeen met 'id' 
+        public string Id { get; set; } // string aangezien guid in controller klasse een string nodig heeft
+
+        [JsonProperty("confirmationCode")]
         public string ConfirmationCode { get; set; }
         public decimal TotalPrice { get; set; }
         public string AccommodationType { get; set; }
@@ -12,6 +19,7 @@ namespace BookingService.Models
 
         public BookingResponse(string confirmationCode, decimal totalPrice, string accommodationType, string stayType, int totalNights, string guestName, string email)
         {
+            Id = confirmationCode;
             ConfirmationCode = confirmationCode;
             TotalPrice = totalPrice;
             AccommodationType = accommodationType;

@@ -17,12 +17,19 @@ string databaseName = cosmosDbSection["DatabaseName"]!;
 string containerName = cosmosDbSection["ContainerName"]!;
 
 
-// ✅ CosmosDbService toevoegen via Dependency Injection
+//  CosmosDbService toevoegen via Dependency Injection
 builder.Services.AddSingleton<ICosmosDbService>(serviceProvider =>
 {
     var client = new CosmosClient(account, key);
     return new CosmosDbService(client, databaseName, containerName);
 });
+
+// blob storage ophalen uit appsettings
+var blobStorageSection = builder.Configuration.GetSection("BlobStorage");
+string blobConnectionString = blobStorageSection["ConnectionString"]!;
+string blobContainerName = blobStorageSection["ContainerName"]!;
+
+builder.Services.AddSingleton<IBlobStorageService>(new BlobStorageService(blobConnectionString, blobContainerName));
 
 
 var app = builder.Build();

@@ -16,12 +16,14 @@ namespace BookingService.Controllers
 
         private readonly HttpClient _httpClient;
         private readonly ICosmosDbService _cosmosDbService;
+        private readonly IBlobStorageService _blobStorageService;
 
         //Constructor HttpClient dependency injection
-        public BookingController(HttpClient httpClient, ICosmosDbService cosmosDbService)
+        public BookingController(HttpClient httpClient, ICosmosDbService cosmosDbService, IBlobStorageService blobStorageService)
         {
             _httpClient = httpClient;
             _cosmosDbService = cosmosDbService;
+            _blobStorageService = blobStorageService;
         }
 
         // POST: boeking creeren
@@ -72,6 +74,18 @@ namespace BookingService.Controllers
             );
 
             await _cosmosDbService.AddBookingAsync(booking); // Boekingen toevoegen aan de lijst
+
+            // Tekst huurovereenkomst (blob storage)
+            string agreementText = $"Bevestiging: {booking.ConfirmationCode}\n" +
+                                    $"Naam: {booking.Guestname}\n" +
+                                    $"Email: {booking.Email}\n" +
+                                    $"Accommodatie: {booking.AccommodationType}\n" +
+                                    $"Verblijfstype: {booking.StayType}\n" +
+                                    $"Aantal nachten: {booking.TotalNights}\n" +
+                                    $"Prijs: €{booking.TotalPrice}";
+
+            // huurovereenkomst uploaden als .txt
+            await _blobStorageService.UploadContractAsync($"{booking.ConfirmationCode}.txt", agreementText);
 
             return Ok(booking);
         }

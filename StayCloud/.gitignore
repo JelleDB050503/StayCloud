@@ -485,3 +485,4 @@ $RECYCLE.BIN/
 
 # App settings met secrets (NIET pushen!)
 appsettings.Development.json
+"StayCloud/Services/BookingService/appsettings.Development.json" 

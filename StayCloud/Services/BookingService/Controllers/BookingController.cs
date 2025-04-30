@@ -17,13 +17,15 @@ namespace BookingService.Controllers
         private readonly HttpClient _httpClient;
         private readonly ICosmosDbService _cosmosDbService;
         private readonly IBlobStorageService _blobStorageService;
+        private readonly IFileProcessor _fileProcessor;
 
         //Constructor HttpClient dependency injection
-        public BookingController(HttpClient httpClient, ICosmosDbService cosmosDbService, IBlobStorageService blobStorageService)
+        public BookingController(HttpClient httpClient, ICosmosDbService cosmosDbService, IBlobStorageService blobStorageService, IFileProcessor fileProcessor)
         {
             _httpClient = httpClient;
             _cosmosDbService = cosmosDbService;
             _blobStorageService = blobStorageService;
+            _fileProcessor = fileProcessor;
         }
 
         // POST: boeking creeren
@@ -75,19 +77,12 @@ namespace BookingService.Controllers
 
             await _cosmosDbService.AddBookingAsync(booking); // Boekingen toevoegen aan de lijst
 
-            // Tekst huurovereenkomst (blob storage)
-            string agreementText = $"Bevestiging: {booking.ConfirmationCode}\n" +
-                                    $"Naam: {booking.Guestname}\n" +
-                                    $"Email: {booking.Email}\n" +
-                                    $"Accommodatie: {booking.AccommodationType}\n" +
-                                    $"Verblijfstype: {booking.StayType}\n" +
-                                    $"Aantal nachten: {booking.TotalNights}\n" +
-                                    $"Prijs: €{booking.TotalPrice}";
-
             // huurovereenkomst uploaden als .txt
-            await _blobStorageService.UploadContractAsync($"{booking.ConfirmationCode}.txt", agreementText);
+            await _fileProcessor.GenerateAndUploadContractAsync(booking);
 
             return Ok(booking);
+
+
         }
 
         // Alle boekingen ophalen via GET
@@ -149,7 +144,7 @@ namespace BookingService.Controllers
                 return BadRequest("Ongeldig verblijfstype.");
 
             // Prijs opnieuw berekenen
-            var priceRequest = new 
+            var priceRequest = new
             {
                 accommodationType = updatedBooking.AccommodationType,
                 stayType = updatedBooking.StayType,
@@ -172,7 +167,7 @@ namespace BookingService.Controllers
             existingBooking.Guestname = updatedBooking.GuestName;
             existingBooking.Email = updatedBooking.Email;
             existingBooking.TotalNights = priceData?.TotalNights ?? 0;
-            existingBooking.TotalPrice = priceData?.Total?? 0;
+            existingBooking.TotalPrice = priceData?.Total ?? 0;
 
             await _cosmosDbService.UpdateBookingAsync(existingBooking);
 

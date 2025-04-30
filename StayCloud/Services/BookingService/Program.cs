@@ -30,6 +30,7 @@ string blobConnectionString = blobStorageSection["ConnectionString"]!;
 string blobContainerName = blobStorageSection["ContainerName"]!;
 
 builder.Services.AddSingleton<IBlobStorageService>(new BlobStorageService(blobConnectionString, blobContainerName));
+builder.Services.AddSingleton<IFileProcessor, FileProcessor>();
 
 
 var app = builder.Build();

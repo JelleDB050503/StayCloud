@@ -29,5 +29,11 @@ namespace BookingService.Services
             string fileName = $"{booking.ConfirmationCode}.txt";
             await _blobStorageService.UploadContractAsync(fileName, agreementText);
         }
+        //ZOEKFUNCTIE TO DO
+
+
+        // VERWIJDER FUNCTIE TO DO
+
+        
     }
 }

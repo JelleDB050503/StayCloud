@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using BookingService.Helpers;
 using BookingService.Services;
+using Azure;
 
 
 namespace BookingService.Controllers
@@ -173,6 +174,47 @@ namespace BookingService.Controllers
 
             return Ok(existingBooking);
         }
+
+
+        // Downloaden huurovereekomst
+        [HttpGet("contract/{confirmationCode}")]
+        public async Task<IActionResult> DownloadContract(string confirmationCode)
+        {
+            try
+            {
+                var fileName = $"{confirmationCode}.txt";
+                var stream = await _blobStorageService.DownloadContractAsync(fileName);
+
+                // Retourneer de inhoud van het bestand als een downloadbare file
+                return File(stream, "text/plain", fileName);
+            }
+            catch (RequestFailedException ex) when (ex.Status == 404)
+            {
+                return NotFound("Contractbestand niet gevonden.");
+            }
+        }
+
+        // opgeslagen huurovereenkomsten ophalen
+        [HttpGet("contracts")]
+        public async Task<IActionResult> GetAllContracts()
+        {
+            var contracts = await _blobStorageService.ListContractsAsync();
+            return Ok(contracts);
+        }
+
+        // Verwijderen huurovereekomst
+        [HttpDelete("contracts/{confirmationCode}")]
+        public async Task<IActionResult> DeleteContract(string confirmationCode)
+        {
+            var fileName = $"{confirmationCode}.txt";
+            var deleted = await _blobStorageService.DeleteContractAsync(fileName);
+
+            if (!deleted)
+                return NotFound("Huurovereenkomst niet gevonden in Blob Storage.");
+
+            return Ok($"Contractbestand {fileName} is verwijderd.");
+        }
+
     }
 
 }

@@ -8,5 +8,6 @@ namespace BookingService.Services
         Task<Stream> DownloadContractAsync(string blobName);
         Task<bool> DeleteContractAsync(string blobName);
         Task<List<string>> ListContractsAsync();
+        Task UpdateContractAsyc(string blobName, string updatedContent);
     }
 }

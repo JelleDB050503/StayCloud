@@ -16,8 +16,10 @@ namespace BookingService.Models
         public int TotalNights { get; set; }
         public string Guestname { get; set; }
         public string Email { get; set; }
+        public bool IsApproved { get; set; } = false;
 
-        public BookingResponse(string confirmationCode, decimal totalPrice, string accommodationType, string stayType, int totalNights, string guestName, string email)
+
+        public BookingResponse(string confirmationCode, decimal totalPrice, string accommodationType, string stayType, int totalNights, string guestName, string email, bool isApproved)
         {
             Id = confirmationCode;
             ConfirmationCode = confirmationCode;
@@ -27,6 +29,7 @@ namespace BookingService.Models
             TotalNights = totalNights;
             Guestname = guestName;
             Email = email;
+            IsApproved = isApproved;
         }
     }
 }

@@ -1,0 +1,82 @@
+Date : 2025-05-08 15:01:21
+Directory : c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud
+Total : 37 files,  1112 codes, 84 comments, 210 blanks, all 1406 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| C#       |         30 |        977 |         84 |        196 |      1,257 |
+| JSON     |          4 |        100 |          0 |          4 |        104 |
+| XML      |          2 |         33 |          0 |          9 |         42 |
+| Markdown |          1 |          2 |          0 |          1 |          3 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++-----------------------------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                                                                | files      | code       | comment    | blank      | total      |
++-----------------------------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                                                                   |         37 |      1,112 |         84 |        210 |      1,406 |
+| . (Files)                                                                                                                                           |          1 |          2 |          0 |          1 |          3 |
+| Services                                                                                                                                            |         36 |      1,110 |         84 |        209 |      1,403 |
+| Services\BookingService                                                                                                                             |         29 |        945 |         74 |        182 |      1,201 |
+| Services\BookingService (Files)                                                                                                                     |          3 |        120 |          4 |         32 |        156 |
+| Services\BookingService\Contexts                                                                                                                    |          1 |         12 |          0 |          2 |         14 |
+| Services\BookingService\Controllers                                                                                                                 |          2 |        253 |         34 |         59 |        346 |
+| Services\BookingService\Helpers                                                                                                                     |          1 |         21 |          0 |          2 |         23 |
+| Services\BookingService\Migrations                                                                                                                  |          3 |        119 |          6 |         28 |        153 |
+| Services\BookingService\Models                                                                                                                      |          8 |        102 |          0 |          5 |        107 |
+| Services\BookingService\Properties                                                                                                                  |          1 |         41 |          0 |          1 |         42 |
+| Services\BookingService\Services                                                                                                                    |         10 |        277 |         30 |         53 |        360 |
+| Services\BookingService\Services (Files)                                                                                                            |          6 |        175 |         18 |         34 |        227 |
+| Services\BookingService\Services\Auth                                                                                                               |          4 |        102 |         12 |         19 |        133 |
+| Services\PriceService                                                                                                                               |          7 |        165 |         10 |         27 |        202 |
+| Services\PriceService (Files)                                                                                                                       |          3 |         35 |          0 |         12 |         47 |
+| Services\PriceService\Controllers                                                                                                                   |          1 |         64 |         10 |         13 |         87 |
+| Services\PriceService\Models                                                                                                                        |          2 |         25 |          0 |          1 |         26 |
+| Services\PriceService\Properties                                                                                                                    |          1 |         41 |          0 |          1 |         42 |
++-----------------------------------------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++-----------------------------------------------------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                                                                                            | language | code       | comment    | blank      | total      |
++-----------------------------------------------------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\README.md                                                                          | Markdown |          2 |          0 |          1 |          3 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\BookingService.csproj                                      | XML      |         22 |          0 |          5 |         27 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Contexts\BookingDbContext.cs                               | C#       |         12 |          0 |          2 |         14 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Controllers\AuthController.cs                              | C#       |         67 |          8 |         13 |         88 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Controllers\BookingController.cs                           | C#       |        186 |         26 |         46 |        258 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Helpers\BookingValidator.cs                                | C#       |         21 |          0 |          2 |         23 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Migrations\20250505101700_InitialAuthMigration.Designer.cs | C#       |         45 |          2 |         12 |         59 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Migrations\20250505101700_InitialAuthMigration.cs          | C#       |         31 |          3 |          4 |         38 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Migrations\BookingDbContextModelSnapshot.cs                | C#       |         43 |          1 |         12 |         56 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Models\BookingRequest.cs                                   | C#       |         14 |          0 |          0 |         14 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Models\BookingResponse.cs                                  | C#       |         29 |          0 |          3 |         32 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Models\ContractUpdateRequest.cs                            | C#       |         12 |          0 |          0 |         12 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Models\LoginRequest.cs                                     | C#       |          8 |          0 |          0 |          8 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Models\PriceResponse.cs                                    | C#       |         13 |          0 |          1 |         14 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Models\PromoteUserRequest.cs                               | C#       |          4 |          0 |          0 |          4 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Models\RegisterRequest.cs                                  | C#       |          9 |          0 |          0 |          9 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Models\User.cs                                             | C#       |         13 |          0 |          1 |         14 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Program.cs                                                 | C#       |         89 |          4 |         26 |        119 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Properties\launchSettings.json                             | JSON     |         41 |          0 |          1 |         42 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Services\Auth\IJwtService.cs                               | C#       |          8 |          0 |          1 |          9 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Services\Auth\IUserService.cs                              | C#       |         10 |          0 |          1 |         11 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Services\Auth\JwtService.cs                                | C#       |         35 |          5 |          6 |         46 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Services\Auth\UserService.cs                               | C#       |         49 |          7 |         11 |         67 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Services\BlobStorageService.cs                             | C#       |         61 |          9 |         14 |         84 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Services\CosmosDbService.cs                                | C#       |         52 |          7 |         12 |         71 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Services\FileProcessor.cs                                  | C#       |         27 |          2 |          5 |         34 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Services\IBlobStorageService.cs                            | C#       |         12 |          0 |          1 |         13 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Services\ICosmosDbService.cs                               | C#       |         14 |          0 |          1 |         15 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\Services\IFileProcessor.cs                                 | C#       |          9 |          0 |          1 |         10 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\BookingService\appsettings.json                                           | JSON     |          9 |          0 |          1 |         10 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\PriceService\Controllers\PriceController.cs                               | C#       |         64 |         10 |         13 |         87 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\PriceService\Models\PriceRequest.cs                                       | C#       |         12 |          0 |          0 |         12 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\PriceService\Models\PriceResponse.cs                                      | C#       |         13 |          0 |          1 |         14 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\PriceService\PriceService.csproj                                          | XML      |         11 |          0 |          4 |         15 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\PriceService\Program.cs                                                   | C#       |         15 |          0 |          7 |         22 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\PriceService\Properties\launchSettings.json                               | JSON     |         41 |          0 |          1 |         42 |
+| c:\Users\Gebruiker\gradprog\ProgrammerenGevorderd3Gent\StayCloud\Services\PriceService\appsettings.json                                             | JSON     |          9 |          0 |          1 |         10 |
+| Total                                                                                                                                               |          |      1,112 |         84 |        210 |      1,406 |
++-----------------------------------------------------------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+

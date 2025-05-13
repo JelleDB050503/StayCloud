@@ -65,5 +65,20 @@ namespace BookingService.Services
 
             return fileNames;
         }
+
+        //Huurovereenkomste updaten ALLEEEN ADMIN
+        public async Task UpdateContractAsyc(string blobName, string updatedContent)
+        {
+            var blobClient = _containerClient.GetBlobClient(blobName);
+
+            if (!await blobClient.ExistsAsync())
+            {
+                throw new FileNotFoundException($"Huurovereenkomst '{blobName}' bestaat niet.");
+            }
+
+            //Overschrijven van inhoud
+            using var stream = new MemoryStream(Encoding.UTF8.GetBytes(updatedContent));
+            await blobClient.UploadAsync(stream, overwrite: true);
+        }
     }
 }

@@ -5,6 +5,8 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using BookingService.Helpers;
 using BookingService.Services;
+using Azure;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace BookingService.Controllers
@@ -18,20 +20,28 @@ namespace BookingService.Controllers
         private readonly ICosmosDbService _cosmosDbService;
         private readonly IBlobStorageService _blobStorageService;
         private readonly IFileProcessor _fileProcessor;
+        private readonly IEmailService _emailService;
 
         //Constructor HttpClient dependency injection
-        public BookingController(HttpClient httpClient, ICosmosDbService cosmosDbService, IBlobStorageService blobStorageService, IFileProcessor fileProcessor)
+        public BookingController(HttpClient httpClient, ICosmosDbService cosmosDbService, IBlobStorageService blobStorageService, IFileProcessor fileProcessor, IEmailService emailService)
         {
             _httpClient = httpClient;
             _cosmosDbService = cosmosDbService;
             _blobStorageService = blobStorageService;
             _fileProcessor = fileProcessor;
+            _emailService = emailService;
         }
 
         // POST: boeking creeren
+        [Authorize]
         [HttpPost("create")]
         public async Task<IActionResult> CreateBooking([FromBody] BookingRequest request)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             //  Validatie van input
             if (!BookingValidator.IsValidAccommodation(request.AccommodationType))
                 return BadRequest("Ongeldig accommodatietype.");
@@ -72,20 +82,28 @@ namespace BookingService.Controllers
                 stayType: request.StayType,
                 totalNights: priceData?.TotalNights ?? 0, // aantal nachten uit PriceService
                 guestName: request.GuestName,
-                email: request.Email
+                email: request.Email,
+                isApproved: false
             );
 
             await _cosmosDbService.AddBookingAsync(booking); // Boekingen toevoegen aan de lijst
 
             // huurovereenkomst uploaden als .txt
             await _fileProcessor.GenerateAndUploadContractAsync(booking);
+            // Laad contractbestand uit blob storage
+            var fileName = $"{booking.Id}.txt";
+            var contractStream = await _blobStorageService.DownloadContractAsync(fileName);
+
+            // Lees de stream als byte-array
+            using var memoryStream = new MemoryStream();
+            await contractStream.CopyToAsync(memoryStream);
+            var attachmentBytes = memoryStream.ToArray();
 
             return Ok(booking);
-
-
         }
 
         // Alle boekingen ophalen via GET
+        [Authorize(Roles = "admin")]
         [HttpGet("all")]
         public async Task<IActionResult> GetAllBookings()
         {
@@ -95,14 +113,22 @@ namespace BookingService.Controllers
 
 
         // Boekingen verwijderen obv confirmatie code via DELETE
+        [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBooking(string id)
         {
+            var bookings = await _cosmosDbService.GetBookingsAsync();
+            var exists = bookings.Any(b => b.Id == id);
+
+            if (!exists)
+                return NotFound($"Boeking met ID '{id}' bestaat niet.");
+
             await _cosmosDbService.DeleteBookingAsync(id);
             return Ok($"Boeking {id} is verwijderd");
         }
 
         // Opzoeken van boekingen op naam en/of confirmation code
+        [Authorize(Roles = "admin")]
         [HttpGet("search")]
         public async Task<IActionResult> SearchBooking([FromQuery] string? name, [FromQuery] string? confirmationCode)
         {
@@ -123,9 +149,15 @@ namespace BookingService.Controllers
         }
 
         // Boekingen bijwerken obv confirmationCode PUT
+        [Authorize(Roles = "admin")]
         [HttpPut("update/{id}")]
         public async Task<IActionResult> UpdateBooking(string id, [FromBody] BookingRequest updatedBooking)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
 
             var allBookings = await _cosmosDbService.GetBookingsAsync();
             // Zoek bestaande boeking
@@ -173,6 +205,123 @@ namespace BookingService.Controllers
 
             return Ok(existingBooking);
         }
-    }
 
+
+        // Downloaden huurovereekomst
+        [Authorize]
+        [HttpGet("contract/{confirmationCode}")]
+        public async Task<IActionResult> DownloadContract(string confirmationCode)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var fileName = $"{confirmationCode}.txt";
+                var stream = await _blobStorageService.DownloadContractAsync(fileName);
+
+                // Retourneer de inhoud van het bestand als een downloadbare file
+                return File(stream, "text/plain", fileName);
+            }
+            catch (RequestFailedException ex) when (ex.Status == 404)
+            {
+                return NotFound("Contractbestand niet gevonden.");
+            }
+        }
+
+        // opgeslagen huurovereenkomsten ophalen
+        [Authorize(Roles = "admin")]
+        [HttpGet("contracts")]
+        public async Task<IActionResult> GetAllContracts()
+        {
+            var contracts = await _blobStorageService.ListContractsAsync();
+            return Ok(contracts);
+        }
+
+        // Verwijderen huurovereekomst
+        [Authorize(Roles = "admin")]
+        [HttpDelete("contracts/{confirmationCode}")]
+        public async Task<IActionResult> DeleteContract(string confirmationCode)
+        {
+            var fileName = $"{confirmationCode}.txt";
+            var deleted = await _blobStorageService.DeleteContractAsync(fileName);
+
+            if (!deleted)
+                return NotFound("Huurovereenkomst niet gevonden in Blob Storage.");
+
+            return Ok($"Contractbestand {fileName} is verwijderd.");
+        }
+
+        //PUT: huurovereenkomst aanpassen
+        [Authorize(Roles = "admin")]
+        [HttpPut("contract/{confirmationCode}")]
+        public async Task<IActionResult> UpdateContract(string confirmationCode, [FromBody] ContractUpdateRequest update)
+        {
+            try
+            {
+                string fileName = $"{confirmationCode}.txt";
+
+                // Bouw de aangepaste tekst voor het contract
+                string updatedContent = $"""
+            Bevestiging: {confirmationCode}
+            Naam: {update.GuestName}
+            Email: {update.Email}
+            Accommodatie: {update.AccommodationType}
+            Verblijfstype: {update.StayType}
+            Aantal nachten: {update.TotalNights}
+            Prijs: €{update.TotalPrice}
+            """;
+
+                await _blobStorageService.UpdateContractAsyc(fileName, updatedContent);
+                await _emailService.SendEmailAsync(update.Email, "Bevestiging huurcontract aangepast", $"Beste {update.GuestName},\n\nUw huurcontract is aangepast.\n\nBevestiging: {confirmationCode}");
+
+                return Ok($"Contract '{fileName}' werd succesvol bijgewerkt.");
+                
+            }
+            catch (FileNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            
+
+        }
+
+        [Authorize(Roles = "admin")]
+        [HttpPost("approve/{id}")]
+        public async Task<IActionResult> ApproveBooking(string id)
+        {
+            var bookings = await _cosmosDbService.GetBookingsAsync();
+            var booking = bookings.FirstOrDefault(b => b.Id == id);
+
+            if (booking == null)
+                return NotFound("Boeking niet gevonden.");
+
+            if (booking.IsApproved)
+                return BadRequest("Boeking is al goedgekeurd.");
+
+            booking.IsApproved = true;
+            await _cosmosDbService.UpdateBookingAsync(booking);
+
+            // Contract ophalen
+            var fileName = $"{booking.Id}.txt";
+            var stream = await _blobStorageService.DownloadContractAsync(fileName);
+            using var mem = new MemoryStream();
+            await stream.CopyToAsync(mem);
+            var data = mem.ToArray();
+
+            // Mail sturen
+            await _emailService.SendEmailWithAttachmentAsync(
+                booking.Email,
+                "Je boeking is goedgekeurd",
+                $"Beste {booking.Guestname},\n\nJe boeking is goedgekeurd.\nBevestiging: {booking.Id}",
+                fileName,
+                data
+            );
+
+            return Ok("Boeking goedgekeurd en e-mail verzonden.");
+        }
+
+    }
 }

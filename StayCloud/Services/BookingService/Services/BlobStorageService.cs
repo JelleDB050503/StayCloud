@@ -1,4 +1,6 @@
+using Azure;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Text;
@@ -27,6 +29,56 @@ namespace BookingService.Services
             var blobClient = _containerClient.GetBlobClient(fileName);
             using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content)); // tekst omzetten naar stream
             await blobClient.UploadAsync(stream, overwrite: true); //uploaden naar storage
+        }
+
+        //Bestanden downloaden uit blob 
+        public async Task<Stream> DownloadContractAsync(string blobName)
+        {
+            BlobClient blobClient = _containerClient.GetBlobClient(blobName);
+
+            if (await blobClient.ExistsAsync())
+            {
+                var response = await blobClient.DownloadAsync();
+                return response.Value.Content;
+            }
+
+            throw new RequestFailedException(404, "Blob not found");
+        }
+
+        // Huurovereenkomst verwijderen
+        public async Task<bool> DeleteContractAsync(string blobName)
+        {
+            BlobClient blobClient = _containerClient.GetBlobClient(blobName);
+
+            var response = await blobClient.DeleteIfExistsAsync();
+            return response.Value; // true als verwijderd, false als niet gevonden
+        }
+        //Lijst alle opgeslagen huurovereenkomsten
+        public async Task<List<string>> ListContractsAsync()
+        {
+            var fileNames = new List<string>();
+
+            await foreach (BlobItem blobItem in _containerClient.GetBlobsAsync())
+            {
+                fileNames.Add(blobItem.Name);
+            }
+
+            return fileNames;
+        }
+
+        //Huurovereenkomste updaten ALLEEEN ADMIN
+        public async Task UpdateContractAsyc(string blobName, string updatedContent)
+        {
+            var blobClient = _containerClient.GetBlobClient(blobName);
+
+            if (!await blobClient.ExistsAsync())
+            {
+                throw new FileNotFoundException($"Huurovereenkomst '{blobName}' bestaat niet.");
+            }
+
+            //Overschrijven van inhoud
+            using var stream = new MemoryStream(Encoding.UTF8.GetBytes(updatedContent));
+            await blobClient.UploadAsync(stream, overwrite: true);
         }
     }
 }

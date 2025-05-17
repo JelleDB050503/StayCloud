@@ -7,6 +7,8 @@ using BookingService.Helpers;
 using BookingService.Services;
 using Azure;
 using Microsoft.AspNetCore.Authorization;
+using BookingService.Contexts;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace BookingService.Controllers
@@ -22,14 +24,17 @@ namespace BookingService.Controllers
         private readonly IFileProcessor _fileProcessor;
         private readonly IEmailService _emailService;
 
+        private readonly BookingDbContext _context;
+
         //Constructor HttpClient dependency injection
-        public BookingController(HttpClient httpClient, ICosmosDbService cosmosDbService, IBlobStorageService blobStorageService, IFileProcessor fileProcessor, IEmailService emailService)
+        public BookingController(HttpClient httpClient, ICosmosDbService cosmosDbService, IBlobStorageService blobStorageService, IFileProcessor fileProcessor, IEmailService emailService, BookingDbContext context)
         {
             _httpClient = httpClient;
             _cosmosDbService = cosmosDbService;
             _blobStorageService = blobStorageService;
             _fileProcessor = fileProcessor;
             _emailService = emailService;
+            _context = context;
         }
 
         // POST: boeking creeren
@@ -83,7 +88,8 @@ namespace BookingService.Controllers
                 totalNights: priceData?.TotalNights ?? 0, // aantal nachten uit PriceService
                 guestName: request.GuestName,
                 email: request.Email,
-                isApproved: false
+                isApproved: false,
+                season: request.Season
             );
 
             await _cosmosDbService.AddBookingAsync(booking); // Boekingen toevoegen aan de lijst
@@ -148,7 +154,6 @@ namespace BookingService.Controllers
             return Ok(results);
         }
 
-        // Boekingen bijwerken obv confirmationCode PUT
         [Authorize(Roles = "admin")]
         [HttpPut("update/{id}")]
         public async Task<IActionResult> UpdateBooking(string id, [FromBody] BookingRequest updatedBooking)
@@ -158,14 +163,11 @@ namespace BookingService.Controllers
                 return BadRequest(ModelState);
             }
 
-
             var allBookings = await _cosmosDbService.GetBookingsAsync();
-            // Zoek bestaande boeking
             var existingBooking = allBookings.FirstOrDefault(b => b.Id == id);
             if (existingBooking == null)
                 return NotFound($"Geen boeking gevonden met boekingsnummer: {id}");
 
-            // Valideren van de input
             if (!BookingValidator.IsValidAccommodation(updatedBooking.AccommodationType))
                 return BadRequest("Ongeldig accommodatietype");
 
@@ -175,7 +177,6 @@ namespace BookingService.Controllers
             if (!BookingValidator.IsValidStayType(updatedBooking.StayType))
                 return BadRequest("Ongeldig verblijfstype.");
 
-            // Prijs opnieuw berekenen
             var priceRequest = new
             {
                 accommodationType = updatedBooking.AccommodationType,
@@ -186,7 +187,6 @@ namespace BookingService.Controllers
                 numDogs = updatedBooking.NumDogs
             };
 
-            // Nieuwe prijs berekenen via priceservice
             var response = await _httpClient.PostAsJsonAsync("https://staycloud-jdb.azurewebsites.net/api/price/calculate", priceRequest);
             if (!response.IsSuccessStatusCode)
                 return BadRequest("Prijsberekening mislukt via PriceService tijdens update.");
@@ -196,15 +196,22 @@ namespace BookingService.Controllers
             // Velden updaten van boeking
             existingBooking.AccommodationType = updatedBooking.AccommodationType;
             existingBooking.StayType = updatedBooking.StayType;
+            existingBooking.Season = updatedBooking.Season;
             existingBooking.Guestname = updatedBooking.GuestName;
             existingBooking.Email = updatedBooking.Email;
             existingBooking.TotalNights = priceData?.TotalNights ?? 0;
             existingBooking.TotalPrice = priceData?.Total ?? 0;
+            existingBooking.IsApproved = false; // opnieuw goedkeuren
 
             await _cosmosDbService.UpdateBookingAsync(existingBooking);
 
+            // ✅ NIEUW: contractbestand bijwerken
+            await _fileProcessor.GenerateAndUploadContractAsync(existingBooking);
+
             return Ok(existingBooking);
+
         }
+
 
 
         // Downloaden huurovereekomst
@@ -278,14 +285,33 @@ namespace BookingService.Controllers
                 await _emailService.SendEmailAsync(update.Email, "Bevestiging huurcontract aangepast", $"Beste {update.GuestName},\n\nUw huurcontract is aangepast.\n\nBevestiging: {confirmationCode}");
 
                 return Ok($"Contract '{fileName}' werd succesvol bijgewerkt.");
-                
+
             }
             catch (FileNotFoundException ex)
             {
                 return NotFound(ex.Message);
             }
-            
 
+
+        }
+
+        [Authorize]
+        [HttpGet("my")]
+        public async Task<IActionResult> GetMyBookings()
+        {
+            var username = User.Identity?.Name;
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+
+            if (user == null)
+                return Unauthorized("Gebruiker niet gevonden.");
+
+            var allBookings = await _cosmosDbService.GetBookingsAsync();
+
+            var myApproved = allBookings
+                .Where(b => b.Email.ToLower() == user.Email.ToLower() && b.IsApproved)
+                .ToList();
+
+            return Ok(myApproved);
         }
 
         [Authorize(Roles = "admin")]

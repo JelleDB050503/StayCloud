@@ -17,7 +17,7 @@ namespace BookingService.Services.Auth
         // Gebruiker registreren
         public async Task<User?> RegisterAsync(string username, string email, string password)
         {
-            if (await UserExistsAsync(username))
+            if (await UserExistsAsync(username) || await _context.Users.AnyAsync(u => u.Email == email))
             {
                 return null;
             }
@@ -53,15 +53,20 @@ namespace BookingService.Services.Auth
             {
                 return null;
             }
+            Console.WriteLine($"INGEVOERD: {password}");
+            Console.WriteLine($"HASH: {user.PasswordHash}");
+            Console.WriteLine($"VERIFIE RESULTAAT: {BCrypt.Net.BCrypt.Verify(password, user.PasswordHash)}");
+
 
             return user;
+
         }
 
 
         //Check of gebruiker bestaat
         public async Task<bool> UserExistsAsync(string username)
         {
-            return await _context.Users.AnyAsync(u=>u.Username == username);
+            return await _context.Users.AnyAsync(u => u.Username == username);
         }
     }
 }

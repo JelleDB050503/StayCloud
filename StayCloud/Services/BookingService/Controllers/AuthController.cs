@@ -76,10 +76,20 @@ namespace BookingService.Controllers
         //ingelogde gebruikers kunnen eigen account zien
         [Authorize]
         [HttpGet("profile")]
-        public IActionResult GetProfile()
+        public async Task<IActionResult> GetProfile()
         {
             var username = User.Identity?.Name;
-            return Ok($"Je bent ingelogd als {username}");
+
+            if (username == null)
+                return Unauthorized();
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Username == username);
+
+            if (user == null)
+                return NotFound("Gebruiker niet gevonden.");
+
+            return Ok(new { username = user.Username, role = user.Role });
         }
 
         //Gebruikers promoveren naar admin

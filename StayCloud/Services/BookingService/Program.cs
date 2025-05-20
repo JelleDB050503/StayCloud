@@ -104,15 +104,25 @@ var emailSection = builder.Configuration.GetSection("EmailSettings");
 builder.Services.Configure<EmailSettings>(emailSection);
 builder.Services.AddScoped<IEmailService, EmailService>();
 
-
-
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReact", policy =>
+    {
+        policy.WithOrigins(
+            "http://localhost:3000" // lokaal testen
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod();
+    });
+});
 
 var app = builder.Build();
 
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseCors("AllowReact");
 
 app.UseAuthentication();
 app.UseAuthorization();

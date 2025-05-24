@@ -102,3 +102,39 @@ tr:nth-child(even) {
     text-align: center;
     margin-top: 1rem;
 }
+
+/* Speciaal voor media en tekstlayout */
+video {
+    display: block;
+    margin: 20px auto;
+    max-width: 90%;
+    height: auto;
+}
+
+/* Algemene afbeeldingen */
+img {
+    max-width: 400px;
+    /* groter gemaakt */
+    height: auto;
+    float: right;
+    margin: 10px 30px 10px 30px;
+    /* links en rechts wat meer marge */
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Specifiek: huurprijzen afbeelding niet rechts zwevend */
+img[alt~="huurprijzen"] {
+    float: none;
+    display: block;
+    margin: 20px auto;
+}
+
+@media (max-width: 768px) {
+    img {
+        float: none;
+        display: block;
+        margin: 10px auto;
+        max-width: 90%;
+    }
+}

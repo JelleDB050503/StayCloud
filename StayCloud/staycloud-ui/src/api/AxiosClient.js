@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://staycloud-booking-jdb.azurewebsites.net', 
+  baseURL: 'http://localhost:5140', 
 });
 
 // ✅ Token toevoegen

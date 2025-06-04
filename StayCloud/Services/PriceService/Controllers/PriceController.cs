@@ -1,4 +1,5 @@
 using System.Dynamic;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PriceService.Models;
 
@@ -6,6 +7,7 @@ namespace PriceService.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class PriceController : ControllerBase
     {
         // Bereken de totale prijs obv request input

@@ -23,11 +23,11 @@ namespace BookingService.Controllers
         private readonly IBlobStorageService _blobStorageService;
         private readonly IFileProcessor _fileProcessor;
         private readonly IEmailService _emailService;
-
+        private readonly PriceServiceClient _priceServiceClient;
         private readonly BookingDbContext _context;
 
         //Constructor HttpClient dependency injection
-        public BookingController(HttpClient httpClient, ICosmosDbService cosmosDbService, IBlobStorageService blobStorageService, IFileProcessor fileProcessor, IEmailService emailService, BookingDbContext context)
+        public BookingController(HttpClient httpClient, ICosmosDbService cosmosDbService, IBlobStorageService blobStorageService, IFileProcessor fileProcessor, IEmailService emailService, BookingDbContext context, PriceServiceClient priceServiceClient)
         {
             _httpClient = httpClient;
             _cosmosDbService = cosmosDbService;
@@ -35,6 +35,7 @@ namespace BookingService.Controllers
             _fileProcessor = fileProcessor;
             _emailService = emailService;
             _context = context;
+            _priceServiceClient = priceServiceClient;
         }
 
         // POST: boeking creeren
@@ -68,16 +69,12 @@ namespace BookingService.Controllers
                 numDogs = request.NumDogs
             };
 
-            // Stuur request naar live PriceService (via link op Azure)
-            var response = await _httpClient.PostAsJsonAsync("https://staycloud-jdb.azurewebsites.net/api/price/calculate", priceRequest);
-
-            if (!response.IsSuccessStatusCode)
+            var priceData = await _priceServiceClient.CalculatePriceAsync(priceRequest);
+            if (priceData == null)
             {
-                return BadRequest("Prijsberekening mislukt via de PriceService. BookingController");
+                return BadRequest("Prijsberekening mislukt via de PriceService.");
             }
 
-            //JSON response lezen van PriceRequest
-            var priceData = await response.Content.ReadFromJsonAsync<PriceResponse>();
 
             // BookingsResponse opstellen
             var booking = new BookingResponse(
@@ -187,11 +184,12 @@ namespace BookingService.Controllers
                 numDogs = updatedBooking.NumDogs
             };
 
-            var response = await _httpClient.PostAsJsonAsync("https://staycloud-jdb.azurewebsites.net/api/price/calculate", priceRequest);
-            if (!response.IsSuccessStatusCode)
-                return BadRequest("Prijsberekening mislukt via PriceService tijdens update.");
+            var priceData = await _priceServiceClient.CalculatePriceAsync(priceRequest);
+            if (priceData == null)
+            {
+                return BadRequest("Prijsberekening mislukt via de PriceService.");
+            }
 
-            var priceData = await response.Content.ReadFromJsonAsync<PriceResponse>();
 
             // Velden updaten van boeking
             existingBooking.AccommodationType = updatedBooking.AccommodationType;

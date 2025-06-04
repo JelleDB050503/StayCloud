@@ -12,7 +12,7 @@ public static class Config
         };
 
     public static IEnumerable<ApiScope> ApiScopes =>
-        new ApiScope[]
+        new List<ApiScope>
         {
             new ApiScope("staycloud.price.api", "StayCloud PriceService API"),
             new ApiScope("staycloud.booking.api", "StayCloud BookingService API"),
